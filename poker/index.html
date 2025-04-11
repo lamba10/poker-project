@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contador Torneio de Poker</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #1e1e2f, #2b2b45);
+      color: #fff;
+      display: flex;
+      min-height: 100vh;
+    }
+    .sidebar {
+      width: 260px;
+      background-color: #151521;
+      padding: 20px;
+      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
+    }
+    .sidebar h2 {
+      font-size: 1.2em;
+      border-bottom: 1px solid #444;
+      padding-bottom: 8px;
+      margin-bottom: 15px;
+    }
+    .sidebar ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .sidebar li {
+      padding: 8px 12px;
+      border-radius: 6px;
+      margin-bottom: 5px;
+      transition: background 0.3s;
+    }
+    .sidebar li.active {
+      background-color: #00b89433;
+      border-left: 4px solid #00ffae;
+      padding-left: 10px;
+      font-weight: bold;
+    }
+    .main {
+      flex: 1;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    h1 {
+      font-size: 2em;
+      margin-bottom: 10px;
+    }
+    #timer {
+      font-size: 4em;
+      margin: 20px 0;
+      color: #00ffae;
+    }
+    .level-info {
+      font-size: 1.5em;
+      margin-bottom: 20px;
+    }
+    .controls {
+      margin-top: 20px;
+    }
+    button {
+      background-color: #00b894;
+      border: none;
+      color: white;
+      padding: 12px 24px;
+      font-size: 1em;
+      cursor: pointer;
+      border-radius: 8px;
+      margin: 0 10px 10px 10px;
+      transition: background-color 0.3s, transform 0.1s;
+    }
+    button:hover {
+      background-color: #019170;
+    }
+    button:active {
+      transform: scale(0.96);
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <h2>Blinds (10 min por nível)</h2>
+    <ul id="blind-list">
+      <li>Nível 1: 25 / 50</li>
+      <li>Nível 2: 50 / 100</li>
+      <li>Nível 3: 100 / 200</li>
+      <li>Nível 4: 150 / 300</li>
+      <li>Nível 5: 200 / 400</li>
+      <li>Nível 6: 300 / 600</li>
+      <li>Nível 7: 500 / 1000</li>
+      <li>Nível 8: 750 / 1500</li>
+      <li>Nível 9: 1000 / 2000</li>
+      <li>Nível 10: 1500 / 3000</li>
+      <li>Nível 11: 2000 / 4000</li>
+      <li>Nível 12: 3000 / 6000</li>
+      <li>Nível 13: 5000 / 10000</li>
+    </ul>
+  </div>
+  <div class="main">
+    <h1>Torneio de Poker - Blinds Turbo</h1>
+    <div class="level-info" id="level-info">Nível 1 - Blinds 25 / 50</div>
+    <div id="timer">10:00</div>
+    <div class="controls">
+      <button onclick="startTimer()" id="start-btn">▶️ Iniciar</button>
+      <button onclick="pauseTimer()" id="pause-btn">⏸️ Pausar</button>
+      <button onclick="restartTournament()">🔁 Reiniciar Torneio</button>
+    </div>
+  </div>
+
+  <script>
+    const levels = [
+      '25 / 50', '50 / 100', '100 / 200', '150 / 300', '200 / 400',
+      '300 / 600', '500 / 1000', '750 / 1500', '1000 / 2000',
+      '1500 / 3000', '2000 / 4000', '3000 / 6000', '5000 / 10000'
+    ];
+
+    let currentLevel = 0;
+    let minutes = 10;
+    let seconds = 0;
+    let interval = null;
+    let paused = false;
+
+    const pauseBtn = document.getElementById('pause-btn');
+    const blindList = document.getElementById('blind-list').getElementsByTagName('li');
+
+    function updateDisplay() {
+      document.getElementById('level-info').textContent =
+        `Nível ${currentLevel + 1} - Blinds ${levels[currentLevel]}`;
+      const min = minutes.toString().padStart(2, '0');
+      const sec = seconds.toString().padStart(2, '0');
+      document.getElementById('timer').textContent = `${min}:${sec}`;
+      highlightCurrentLevel();
+    }
+
+    function highlightCurrentLevel() {
+      for (let i = 0; i < blindList.length; i++) {
+        blindList[i].classList.remove('active');
+      }
+      if (currentLevel < blindList.length) {
+        blindList[currentLevel].classList.add('active');
+      }
+    }
+
+    function startTimer() {
+      if (interval || currentLevel >= levels.length) return;
+
+      paused = false;
+      updateDisplay();
+
+      interval = setInterval(() => {
+        if (!paused) {
+          if (seconds === 0) {
+            if (minutes === 0) {
+              currentLevel++;
+              if (currentLevel >= levels.length) {
+                clearInterval(interval);
+                interval = null;
+                document.getElementById('level-info').textContent = 'Torneio encerrado';
+                document.getElementById('timer').textContent = '00:00';
+                return;
+              } else {
+                minutes = 10;
+                seconds = 0;
+              }
+            } else {
+              minutes--;
+              seconds = 59;
+            }
+          } else {
+            seconds--;
+          }
+          updateDisplay();
+        }
+      }, 1000);
+    }
+
+    function pauseTimer() {
+      paused = !paused;
+      pauseBtn.textContent = paused ? '▶️ Retomar' : '⏸️ Pausar';
+    }
+
+    function restartTournament() {
+      if (confirm('Tem certeza que deseja reiniciar o torneio? Isso zerará o cronômetro.')) {
+        clearInterval(interval);
+        interval = null;
+        paused = false;
+        currentLevel = 0;
+        minutes = 10;
+        seconds = 0;
+        pauseBtn.textContent = '⏸️ Pausar';
+        updateDisplay();
+      }
+    }
+
+    updateDisplay();
+  </script>
+</body>
+</html>
